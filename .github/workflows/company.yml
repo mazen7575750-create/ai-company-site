@@ -25,6 +25,31 @@ jobs:
         with:
           node-version: "20"
 
+      - name: 📥 طلبات المالك (من الـIssues)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue list --state open --json number,title,body --limit 20 > /tmp/issues.json 2>/dev/null || echo '[]' > /tmp/issues.json
+          node -e '
+            const fs=require("fs");
+            let issues=[]; try{issues=JSON.parse(fs.readFileSync("/tmp/issues.json","utf8"))}catch(e){}
+            const cfg=JSON.parse(fs.readFileSync("company.config.json","utf8"));
+            cfg.goals=cfg.goals||[];
+            const added=[];
+            for(const it of issues){
+              const txt=(it.title||"").trim()+((it.body||"").trim()?" — "+it.body.trim():"");
+              if(!txt || cfg.goals.includes(txt)) continue;
+              cfg.goals.push(txt); added.push(it.number);
+            }
+            fs.writeFileSync("company.config.json",JSON.stringify(cfg,null,2));
+            fs.writeFileSync("/tmp/added.json",JSON.stringify(added));
+            console.log(added.length? "📥 طلبات جديدة: "+added.join(", ") : "لا طلبات جديدة");
+          '
+          for n in $(node -e 'try{console.log(JSON.parse(require("fs").readFileSync("/tmp/added.json","utf8")).join(" "))}catch(e){}'); do
+            gh issue comment "$n" --body "✅ وصل طلبك للشركة — هبدأ التنفيذ في الجولة الجاية." || true
+            gh issue close "$n" || true
+          done
+
       - name: 🏢 شغّل الشركة
         env:
           PROVIDER_API_KEY: ${{ secrets.PROVIDER_API_KEY }}
