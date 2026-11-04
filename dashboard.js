@@ -41,20 +41,20 @@ function style() {
   const s = document.createElement("style");
   s.id = "dash-css";
   s.textContent = `
-  #dash{position:fixed;inset:0;z-index:999999;background:#070c14f7;color:#e6eefb;
+  #dash{position:fixed;inset:0;z-index:999999;background:transparent;color:#e6eefb;pointer-events:none;
     font:14px/1.75 system-ui,'Segoe UI',sans-serif;direction:rtl;overflow:auto;
-    padding:0 0 40px;backdrop-filter:blur(14px)}
+    padding:0 0 40px}
   #dash *{box-sizing:border-box}
-  #dash .wrap{max-width:920px;margin:0 auto;padding:0 14px}
-  #dash header{position:sticky;top:0;background:#0a1120f2;backdrop-filter:blur(10px);
-    border-bottom:1px solid #1b2740;padding:12px 0;margin-bottom:18px;z-index:2}
+  #dash .wrap{max-width:920px;margin:0 auto;padding:0 14px;pointer-events:auto}
+  #dash header{position:sticky;top:0;background:#0a1120ee;backdrop-filter:blur(10px);
+    border-bottom:1px solid #1b2740;padding:12px 0;margin-bottom:18px;z-index:2;border-radius:0 0 14px 14px}
   #dash h1{margin:0;font-size:17px;font-weight:700;letter-spacing:.2px}
   #dash .sub{color:#7f93ae;font-size:12px;margin-top:2px}
   #dash .row{display:flex;gap:10px;flex-wrap:wrap}
-  #dash .card{background:#101a2b;border:1px solid #1e2c45;border-radius:14px;padding:14px;flex:1;min-width:132px}
-  #dash .big{font-size:26px;font-weight:800;line-height:1.2;color:#fff}
+  #dash .card{background:#101a2be6;border:1px solid #1e2c45;border-radius:14px;padding:10px 12px;flex:1;min-width:104px;backdrop-filter:blur(6px)}
+  #dash .big{font-size:21px;font-weight:800;line-height:1.2;color:#fff}
   #dash .lbl{color:#8ba0bb;font-size:12px;margin-top:2px}
-  #dash .sec{background:#0d1626;border:1px solid #1c2940;border-radius:14px;padding:16px;margin:12px 0}
+  #dash .sec{background:#0d1626ee;border:1px solid #1c2940;border-radius:14px;padding:16px;margin:12px 0}
   #dash .sec h2{margin:0 0 12px;font-size:14px;font-weight:700;color:#cfe0f5;
     display:flex;align-items:center;gap:8px}
   #dash .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;
@@ -63,7 +63,7 @@ function style() {
   #dash .item:last-child{border:0}
   #dash .muted{color:#71839c;font-size:12px}
   #dash .state{display:flex;align-items:center;gap:10px;padding:10px 14px;
-    border-radius:12px;background:#0f1c2e;border:1px solid #1f3049;margin-bottom:16px}
+    border-radius:12px;background:#0f1c2eee;border:1px solid #1f3049;margin-bottom:16px}
   #dash .dot{width:10px;height:10px;border-radius:50%;flex:none}
   #dash textarea{width:100%;min-height:92px;background:#0a1322;color:#e6eefb;
     border:1px solid #24365a;border-radius:12px;padding:12px;font:14px/1.7 inherit;resize:vertical}
@@ -224,7 +224,7 @@ function render(s) {
   body.innerHTML = `
   <header>
     <div class="wrap">
-      <button class="close" id="dash-x">إغلاق</button>
+      <button class="close" id="dash-x">✕ رجوع للشركة</button>
       <h1>🏢 شركة الذكاء المستقلة</h1>
       <div class="sub">${s.company && s.company.name ? esc(s.company.name) : "لوحة المتابعة"} • ${
     agents.filter((a) => a.connectionId && a.model).length
@@ -278,7 +278,7 @@ function boot() {
   if (!document.getElementById("dash-fab")) {
     const f = document.createElement("button");
     f.id = "dash-fab";
-    f.textContent = "📊 الشركة";
+    f.textContent = "📊 إحصائيات وطلب جديد";
     f.style.cssText =
       "position:fixed;right:14px;bottom:14px;z-index:999998;background:#1d6fe8;color:#fff;" +
       "border:0;border-radius:99px;padding:12px 18px;font:700 14px system-ui;direction:rtl;" +
@@ -286,7 +286,7 @@ function boot() {
     f.onclick = open;
     document.body.appendChild(f);
   }
-  open();
+  // اللوحة مقفولة افتراضيًا — الشركة 3D هي الأساس
   setInterval(() => {
     const d = document.getElementById("dash");
     if (d && d.style.display !== "none") pull();
