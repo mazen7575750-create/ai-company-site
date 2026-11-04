@@ -1,10 +1,11 @@
 {
   "provider": {
-    "type": "groq",
+    "type": "openai_compatible",
     "name": "Groq",
     "baseUrl": "https://api.groq.com/openai/v1",
     "model": "qwen/qwen3.8-27b"
   },
-  "goals": [],
+  "loop": { "enabled": true },
+  "goals": ["اكتب جملة واحدة عن البحر"],
   "settings": { "concurrency": 1, "maxSteps": 8 }
 }
