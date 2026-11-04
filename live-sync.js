@@ -3,7 +3,7 @@
    يوضع هذا الملف في الريبو جانب index.html على فرع gh-pages.
    بيقرأ الحالة من GitHub كل دقيقة، ويرسمها على الخريطة 3D.
    ========================================================================== */
-const RAW = "https://raw.githubusercontent.com/mazen7575750-create/ai-company-site/main/company.json";
+const RAW = "company.json";  // نفس الريبو — لا يحتاج أي مفتاح
 
 /* ---------- شريط الحالة ---------- */
 function bar() {
