@@ -163,8 +163,9 @@ async function applyConfig(engine, db) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            type: pr.type || "groq",
+            type: pr.type || "openai_compatible",
             name: pr.name || "Groq",
+            baseUrl: pr.baseUrl || "https://api.groq.com/openai/v1",
             apiKey: key,
             model: pr.model || "",
             autoFetch: true
@@ -185,7 +186,7 @@ async function applyConfig(engine, db) {
   }
 
   // 3) تهيئة كل الموظفين على المزود الجاهز
-  const ready = (db.connections || []).find((c) => c.enabled !== false && c.type === (pr.type || "groq") && (c.models || []).length);
+  const ready = (db.connections || []).find((c) => c.enabled !== false && c.type === (pr.type || "openai_compatible") && (c.models || []).length);
   if (ready && key && !/PUT_YOUR|YOUR_KEY|CHANGE_ME/i.test(key)) {
     // وزّع على عدة موديلات — كل موديل له حد مستقل على المزود
     const GOOD = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "allam-2-7b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile"];
