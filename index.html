@@ -220,7 +220,6 @@ body.ui-normal #osNav button{min-height:54px;padding:10px!important;font-size:12
 body.ui-normal #inspect{max-width:640px;max-height:62vh;padding:17px}
 body.ui-normal #modalBox{width:min(95vw,760px);padding:16px}
 </style>
-<script src="dashboard.js" defer></script>
 </head>
 <body>
 <div id="gl"></div>
@@ -1579,9 +1578,33 @@ $("osRefresh").onclick=()=>refreshOS();
 
 (async function dragOS(){let d=null;const h=$("osHead"),b=$("os");h.addEventListener("pointerdown",e=>{if(innerWidth<760||e.target.closest("button"))return;const r=b.getBoundingClientRect();d={dx:e.clientX-r.left,dy:e.clientY-r.top};b.style.transform="none";b.style.right="auto";b.style.left=r.left+"px";b.style.top=r.top+"px";h.setPointerCapture(e.pointerId)});h.addEventListener("pointermove",e=>{if(!d)return;b.style.left=clamp(e.clientX-d.dx,4,innerWidth-140)+"px";b.style.top=clamp(e.clientY-d.dy,4,innerHeight-90)+"px"});h.addEventListener("pointerup",()=>d=null)})();
 
+/* ====== الجسر المحلي: كل نداءات /api تُنفَّذ على company.json مباشرة ====== */
+const LOCAL_API={os:null,cfg:null};
+async function localCall(path,method="GET",body=null){
+  const st=LOCAL_API.os||(LOCAL_API.os=await fetch("company.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.json()));
+  if(path==="/api/os")return LOCAL_API.os;
+  try{
+    const url="https://api.github.com/repos/mazen7575750-create/ai-company-site/issues";
+    if(path==="/api/goals"&&body){
+      const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"🎯 "+body.goal,body:"طلب المالك من الشركة"})});
+      if(r.status===201||r.status===200)return {ok:true,status:"planning"};
+      throw new Error("تعذر الإرسال ("+r.status+")");
+    }
+    throw new Error("هذا الإجراء يحتاج الموقع الحي");
+  }catch(e){throw e}
+}
+
 async function refreshOS(soft=false){
   syncOsChrome();
   const seq=++osReqSeq;
+  if(!cfg.url||cfg.url==="local"){ 
+    try{
+      const data=await localCall("/api/os");
+      osData=data;try{coState()}catch{}osDataAt=Date.now();serverOnline=true;
+      $("osSrv").textContent="🟢 بيانات الشركة حقيقية — آخر جولة";
+      renderApp();return;
+    }catch(e){$("osSrv").textContent="⚠️ تعذر قراءة حالة الشركة";renderApp();return}
+  }
   cfg.url=normalizeServerUrl(cfg.url);
   if(!cfg.url){serverOnline=false;$("osSrv").textContent="🔴 غير متصل";if(osData||curApp==="cameras")renderApp();else renderServerSetup("لم يُدخل رابط خادم الشركة بعد.");return}
   try{
@@ -1635,7 +1658,7 @@ function renderApp(){
     C.scrollTop=C.scrollHeight;
     $("goalBtn").onclick=async()=>{const g=$("goalTxt").value.trim();if(!g)return;$("goalMsg").textContent="جارٍ إرسال الهدف…";try{const p=await api("/api/goals",{method:"POST",body:JSON.stringify({goal:g})});$("goalMsg").textContent="✅ استلم المدير الهدف ("+statusAr(p.status)+") — تابع خطته ومهامه في «المشاريع والمهام» وشاهد الموظفين يعملون فعلًا بالمقر.";setTimeout(()=>openOS("projects"),1200)}catch(e){$("goalMsg").textContent="❌ "+e.message}};
     $("scanBtn").onclick=async()=>{try{await api("/api/ceo/scan",{method:"POST",body:"{}"});toast("🧭 بدأ المدير زياد مسحه — قراراته ستظهر بالنشاط")}catch(e){toast("❌ "+e.message)}};
-    const send=async()=>{const v=$("ceoIn").value.trim();if(!v)return;$("ceoIn").value="";$("ceoSend").disabled=true;$("ceoSend").textContent="المدير يفكر بنموذجه…";try{await api("/api/ceo/chat",{method:"POST",body:JSON.stringify({message:v})});await refreshOS()}catch(e){toast("❌ "+e.message,5000);$("ceoSend").disabled=false;$("ceoSend").textContent="إرسال"}};
+    const send=async()=>{const v=$("ceoIn").value.trim();if(!v)return;$("ceoIn").value="";$("ceoSend").disabled=true;$("ceoSend").textContent="بنبعته للمدير زياد…";try{const r=await fetch("https://api.github.com/repos/mazen7575750-create/ai-company-site/issues",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"👑 رسالة للمدير زياد: "+v.slice(0,90),body:v})});if(!r.ok)throw new Error("تعذر الإرسال ("+r.status+")");toast("✅ وصلت لزياد — هينفّذها في الجولة الجاية",6000)}catch(e){toast("❌ "+e.message,5000);$("ceoSend").disabled=false;$("ceoSend").textContent="إرسال"}};
     $("ceoSend").onclick=send;$("ceoIn").onkeydown=e=>{if(e.key==="Enter")send()};
   }
   else if(curApp==="projects"){
