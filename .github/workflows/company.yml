@@ -1,0 +1,58 @@
+name: 🏢 الشركة تعمل
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: company
+  cancel-in-progress: false
+
+jobs:
+  work:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 🏢 شغّل الشركة
+        env:
+          PROVIDER_API_KEY: ${{ secrets.PROVIDER_API_KEY }}
+          RUN_BUDGET_MS: "240000"
+          MAX_WAITS: "5"
+        run: node runner.mjs
+
+      - name: 💾 احفظ وانشر
+        if: always()
+        run: |
+          git config --global user.name  "AI Company Bot"
+          git config --global user.email "ai-company@users.noreply.github.com"
+          if [ -f data/company.json ]; then cp data/company.json ./company.json; fi
+          git add -A data/ company.json 2>/dev/null || true
+          git diff --cached --quiet || { git commit -q -m "🏢 $(date -u '+%Y-%m-%d %H:%M UTC')"; git pull --rebase --autostash -q || true; git push -q; }
+          echo "✅ منشور"
+
+      - name: 🔁 الجولة التالية
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          have=$(node -e 'try{const d=require("./data/company.json");const t=(d.tasks||[]).filter(x=>["queued","running","under_review","blocked_unconfigured"].includes(x.status));const p=(d.projects||[]).filter(x=>["planning","waiting_ceo_config"].includes(x.status));console.log(t.length+p.length)}catch(e){console.log(0)}')
+          echo "شغل متبقٍ: $have"
+          if [ "$have" -gt 0 ]; then
+            sleep 15
+            gh workflow run company.yml || echo "تعذر طلب الجولة"
+            sleep 3
+          else
+            echo "😴 لا شغل — الشركة تنام"
+          fi
