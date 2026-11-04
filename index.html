@@ -1597,16 +1597,26 @@ async function localCall(path,method="GET",body=null){
 async function refreshOS(soft=false){
   syncOsChrome();
   const seq=++osReqSeq;
-  if(!cfg.url||cfg.url==="local"){ 
-    try{
-      const data=await localCall("/api/os");
-      osData=data;try{coState()}catch{}osDataAt=Date.now();serverOnline=true;
-      $("osSrv").textContent="🟢 بيانات الشركة حقيقية — آخر جولة";
-      renderApp();return;
-    }catch(e){$("osSrv").textContent="⚠️ تعذر قراءة حالة الشركة";renderApp();return}
+  // الشركة الحية: تقرأ company.json من نفس الموقع — لا خادم ولا رابط
+  cfg.url="local"; saveCfg();
+  try{
+    const data=await localCall("/api/os");
+    osData=data;osDataAt=Date.now();serverOnline=true;
+    const ae=document.activeElement;
+    const typing=soft&&ae&&$("osMain").contains(ae)&&["INPUT","TEXTAREA","SELECT"].includes(ae.tagName);
+    if(!typing)renderApp();
+    return;
+  }catch(e){
+    serverOnline=false;
+    const b=$("osMain");
+    if(b)b.innerHTML=`<h3>${esc(appLabel())}</h3><div class="card" style="border-color:#7a2b2b">
+      <b>⚠️ تعذر قراءة حالة الشركة</b>
+      <p class="small">الملف company.json لم يصل بعد من الجولة الأولى. جرّب «تحديث» بعد دقيقة.</p>
+      <p class="small" style="color:#ff9a7a">${esc(e.message||"")}</p></div>`;
+    return;
   }
   cfg.url=normalizeServerUrl(cfg.url);
-  if(!cfg.url){serverOnline=false;$("osSrv").textContent="🔴 غير متصل";if(osData||curApp==="cameras")renderApp();else renderServerSetup("لم يُدخل رابط خادم الشركة بعد.");return}
+  
   try{
     const data=await api("/api/os");if(seq!==osReqSeq)return;
     osData=data;try{coState()}catch{}osDataAt=Date.now();serverOnline=true;$("osSrv").textContent="🟢 الخادم متصل";
